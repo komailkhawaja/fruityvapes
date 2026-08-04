@@ -4,6 +4,6 @@
     "builder": "RAILPACK"
   },
   "deploy": {
-    "startCommand": "cd server && npm install && node server.js"
+    "startCommand": "node server.js"
   }
 }
