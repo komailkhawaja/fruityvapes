@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FruityVapes — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFAFF; --panel:#FFFFFF; --panel-warm:#F3F1FC; --edge:#E7E3F5; --text:#26232F; --dim:#7C7791;
+    --lav:#8B7FD6; --lav-deep:#6C5FC7; --peach:#FFB4A2; --peach-deep:#F2937D; --sage:#6FCF97; --sage-deep:#4CAF75;
+    --amber:#FBBF24; --red:#F0625A; --green:#4CAF75;
+    /* legacy aliases so the rest of the admin CSS repaints without a full rewrite */
+    --teal:var(--sage); --teal-deep:var(--sage-deep); --coral:var(--peach); --coral-deep:var(--peach-deep); --lavender:var(--lav);
+    --shadow-soft: 0 20px 40px -24px rgba(38,35,47,.16);
+    --shadow-card: 0 14px 28px -18px rgba(38,35,47,.12);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh;}
+  .display{font-family:'Baloo 2',sans-serif;}
+  .mono{font-family:'Space Mono',monospace;}
+  svg.icon{ width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; display:block; }
+
+  /* ---------- login screen ---------- */
+  #loginScreen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+    background:
+      radial-gradient(900px 500px at 15% -5%, rgba(139,127,214,.14) 0%, transparent 60%),
+      radial-gradient(700px 420px at 100% 15%, rgba(255,180,162,.16) 0%, transparent 55%),
+      var(--bg);
+  }
+  .login-card{
+    width:100%; max-width:380px; background:var(--panel); border:1px solid var(--edge);
+    border-radius:20px; padding:34px 30px; box-shadow:var(--shadow-soft);
+    animation:card-in .5s cubic-bezier(.2,.9,.25,1.1);
+  }
+  @keyframes card-in{ from{ opacity:0; transform:translateY(14px);} to{ opacity:1; transform:translateY(0);} }
+  .login-card .lock-badge{
+    width:44px; height:44px; border-radius:12px; background:rgba(45,212,191,.12); color:var(--teal-deep);
+    display:flex; align-items:center; justify-content:center; margin-bottom:16px;
+  }
+  .login-card .lock-badge svg{ width:22px; height:22px; }
+  .login-card img{ height:24px; margin-bottom:14px; opacity:.9; }
+  .login-card h1{ font-size:20px; margin:0 0 6px; }
+  .login-card p.sub{ color:var(--dim); font-size:13.5px; margin:0 0 26px; }
+  label{ display:block; font-size:12.5px; color:var(--dim); margin-bottom:6px; font-weight:600; }
+  input{
+    width:100%; padding:11px 13px; border-radius:10px; border:1px solid var(--edge);
+    background:var(--panel-warm); color:var(--text); font-size:14px; margin-bottom:16px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  input:focus{ outline:none; border-color:var(--teal-deep); background:#fff; }
+  button.primary{
+    width:100%; padding:12px; border:none; border-radius:10px; background:var(--teal-deep);
+    color:#fff; font-weight:700; font-size:14.5px; cursor:pointer; transition:transform .15s, box-shadow .15s;
+    box-shadow:0 12px 24px -10px rgba(20,184,166,.5);
+  }
+  button.primary:hover{ transform:translateY(-1px); box-shadow:0 16px 28px -10px rgba(20,184,166,.6); }
+  .error-msg{ color:var(--red); font-size:13px; margin:-6px 0 14px; display:none; align-items:center; gap:6px; }
+  .error-msg svg{ width:14px; height:14px; }
+
+  /* ---------- dashboard ---------- */
+  #dashboard{ display:none; }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; padding:18px clamp(16px,4vw,44px);
+    border-bottom:1px solid var(--edge); position:sticky; top:0; background:rgba(250,247,242,.9); backdrop-filter:blur(6px); z-index:5;
+  }
+  .topbar img{ height:26px; }
+  .topbar .right{ display:flex; align-items:center; gap:14px; }
+  .badge{
+    font-family:'Space Mono',monospace; font-size:12px; padding:6px 12px 6px 10px; border-radius:999px;
+    border:1px solid var(--edge); color:var(--dim); display:flex; align-items:center; gap:7px; background:var(--panel);
+  }
+  .badge svg.icon{ width:14px; height:14px; }
+  .dot{width:7px;height:7px;border-radius:50%; background:#d9d2c4;}
+  .dot.on{ background:var(--green); box-shadow:0 0 6px rgba(63,203,116,.7); }
+  .logout-btn{ display:inline-flex; align-items:center; gap:6px; background:transparent; border:1px solid var(--edge); color:var(--dim); padding:8px 14px; border-radius:9px; cursor:pointer; font-size:13px; transition:color .15s, border-color .15s; }
+  .logout-btn:hover{ color:var(--text); border-color:var(--dim); }
+
+  .wrap{ max-width:1100px; margin:0 auto; padding:30px clamp(16px,4vw,44px) 60px; }
+  h2.section{ display:flex; align-items:center; gap:8px; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); margin:0 0 16px; font-weight:700; }
+  h2.section svg.icon{ width:15px; height:15px; }
+
+  .slots-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; margin-bottom:40px; }
+  .slot-panel{
+    background:var(--panel); border:1px solid var(--edge); border-radius:16px; padding:20px;
+    box-shadow:var(--shadow-card); transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .slot-panel:hover{ transform:translateY(-3px); }
+  .slot-panel .top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+  .slot-panel .code{ font-family:'Space Mono',monospace; color:var(--teal-deep); font-size:12.5px; font-weight:600; }
+  .slot-panel h3{ margin:4px 0 2px; font-size:16px; }
+  .slot-panel .price-line{ color:var(--dim); font-size:13px; margin-bottom:14px; }
+  .field-row{ display:flex; gap:10px; margin-bottom:10px; }
+  .field-row > div{ flex:1; }
+  .field-row label{ margin-bottom:4px; }
+  .field-row input, .field-row select{ margin-bottom:0; padding:8px 10px; font-size:13px; }
+  .field-row select{
+    width:100%; border-radius:10px; border:1px solid var(--edge); background:var(--panel-warm); color:var(--text); font-family:'Inter',sans-serif;
+  }
+
+  /* ---------- add product panel ---------- */
+  .add-product-panel{
+    background:var(--panel); border:1px solid var(--edge); border-radius:16px; padding:20px;
+    box-shadow:var(--shadow-card); margin-bottom:22px; animation:card-in-admin .25s ease;
+  }
+  @keyframes card-in-admin{ from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:translateY(0); } }
+  .add-product-panel .field-row{ margin-bottom:12px; }
+  .slot-actions{ display:flex; gap:10px; margin-top:14px; }
+  .btn-sm{ display:inline-flex; align-items:center; gap:6px; padding:9px 13px; border-radius:9px; font-size:12.5px; border:none; cursor:pointer; font-weight:600; transition:transform .15s ease; }
+  .btn-sm svg.icon{ width:13px; height:13px; }
+  .btn-sm:hover:not(:disabled){ transform:translateY(-1px); }
+  .btn-save{ background:var(--teal); color:#04302B; }
+  .btn-test{ background:var(--amber); color:#4A3300; }
+  .btn-delete{ background:rgba(240,98,90,.14); color:var(--red); padding:9px 11px; }
+  .btn-delete:hover{ background:rgba(240,98,90,.24); }
+  .btn-sm:disabled{ opacity:.5; cursor:not-allowed; }
+
+  table{ width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--edge); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-card); }
+  thead th{ text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--dim); padding:12px 16px; border-bottom:1px solid var(--edge); background:var(--panel-warm); }
+  tbody td{ padding:12px 16px; font-size:13.5px; border-bottom:1px solid var(--edge); }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr{ transition:background .15s ease; }
+  tbody tr:hover{ background:var(--panel-warm); }
+  .status-chip{ padding:3px 10px; border-radius:999px; font-size:11.5px; font-family:'Space Mono',monospace; font-weight:600; }
+  .status-dispensed{ background:rgba(63,203,116,.14); color:#1F8A44; }
+  .status-pending, .status-dispensing{ background:rgba(251,191,36,.18); color:#B7791F; }
+  .status-failed{ background:rgba(240,98,90,.14); color:var(--red); }
+  .empty-note{ color:var(--dim); font-size:13.5px; padding:22px; text-align:center; }
+
+  /* ---------- low-stock banner ---------- */
+  .alert-banner{
+    display:flex; align-items:center; gap:10px; background:rgba(251,191,36,.14); border:1px solid rgba(251,191,36,.4);
+    color:#8A5A00; padding:12px 16px; border-radius:12px; font-size:13.5px; font-weight:600; margin-bottom:22px;
+  }
+  .alert-banner svg.icon{ flex-shrink:0; width:18px; height:18px; }
+
+  /* ---------- stat cards ---------- */
+  .stat-cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:34px; }
+  .stat-card{ background:var(--panel); border:1px solid var(--edge); border-radius:14px; padding:16px 18px; box-shadow:var(--shadow-card); }
+  .stat-card .label{ font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--dim); font-weight:700; margin-bottom:6px; }
+  .stat-card .value{ font-family:'Space Mono',monospace; font-size:22px; font-weight:700; }
+  .stat-card .value.warn{ color:#B7791F; }
+  .stat-card .value.danger{ color:var(--red); }
+
+  /* ---------- chart panel ---------- */
+  .chart-panel{ background:var(--panel); border:1px solid var(--edge); border-radius:16px; padding:22px 20px 14px; box-shadow:var(--shadow-card); margin-bottom:36px; }
+  .chart-bars{ display:flex; align-items:flex-end; gap:6px; height:150px; }
+  .chart-bar-col{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+  .chart-bar{ width:100%; max-width:26px; background:linear-gradient(180deg,var(--teal),var(--teal-deep)); border-radius:5px 5px 0 0; transition:height .4s cubic-bezier(.2,.9,.25,1.1); }
+  .chart-bar-label{ font-size:9.5px; color:var(--dim); margin-top:6px; font-family:'Space Mono',monospace; white-space:nowrap; }
+  .chart-empty{ color:var(--dim); font-size:13.5px; text-align:center; padding:30px; }
+
+  /* ---------- section row + export ---------- */
+  .section-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+  .btn-export{ background:var(--panel); border:1px solid var(--edge); color:var(--text); }
+  .btn-export:hover{ border-color:var(--teal-deep); color:var(--teal-deep); }
+  .btn-delete-bulk{ background:rgba(240,98,90,.14); color:var(--red); border:1px solid rgba(240,98,90,.3); }
+  .btn-delete-bulk:hover{ background:rgba(240,98,90,.24); }
+  #ordersBody input[type="checkbox"], #selectAllOrders{ width:16px; height:16px; cursor:pointer; accent-color:var(--teal-deep); }
+  .order-delete-btn{
+    background:none; border:none; cursor:pointer; color:var(--dim); padding:6px;
+    border-radius:7px; display:flex; align-items:center; justify-content:center; transition:all .15s ease;
+  }
+  .order-delete-btn:hover{ background:rgba(240,98,90,.14); color:var(--red); }
+  .order-delete-btn svg.icon{ width:15px; height:15px; }
+  tbody tr.row-selected{ background:var(--panel-warm); }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="lock-badge">
+      <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    </div>
+    <img src="/assets/logo.png" alt="FruityVapes" />
+    <h1>Admin control panel</h1>
+    <p class="sub">Manage the vending machine, stock and orders remotely.</p>
+    <form id="loginForm">
+      <label>Username</label>
+      <input type="text" id="username" autocomplete="username" required />
+      <label>Password</label>
+      <input type="password" id="password" autocomplete="current-password" required />
+      <p class="error-msg" id="loginError"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> Invalid username or password.</p>
+      <button class="primary" type="submit">Log in</button>
+    </form>
+  </div>
+</div>
+
+<div id="dashboard">
+  <div class="topbar">
+    <img src="/assets/logo.png" alt="FruityVapes" />
+    <div class="right">
+      <span class="badge">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg>
+        <span class="dot" id="machineDot"></span><span id="machineText">CHECKING…</span>
+      </span>
+      <button class="logout-btn" id="logoutBtn">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Log out
+      </button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="alert-banner" id="lowStockBanner" style="display:none;"></div>
+
+    <div class="stat-cards" id="statCards"></div>
+
+    <div class="section-row">
+      <h2 class="section" style="margin-bottom:0;">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M21 8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg>
+        Slots &amp; stock
+      </h2>
+      <button class="btn-sm btn-export" id="addProductBtn">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Add product
+      </button>
+    </div>
+
+    <div class="add-product-panel" id="addProductPanel" style="display:none;">
+      <div class="field-row">
+        <div><label>Slot code</label><input type="text" id="np-slot" placeholder="e.g. A3"/></div>
+        <div><label>Category</label>
+          <select id="np-category">
+            <option value="flavour">Flavour (e-liquid)</option>
+            <option value="pod">Pod Kit (device)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div><label>Product name</label><input type="text" id="np-name" placeholder="e.g. Blue Razz Ice"/></div>
+      </div>
+      <div class="field-row">
+        <div><label>Subtitle</label><input type="text" id="np-sub" placeholder="e.g. Nicotine Salt E-Liquid, 30ml"/></div>
+      </div>
+      <div class="field-row">
+        <div><label>Price (PKR)</label><input type="number" id="np-price" placeholder="4000"/></div>
+        <div><label>Stock</label><input type="number" id="np-stock" placeholder="5" min="0"/></div>
+      </div>
+      <div class="field-row">
+        <div><label>Compare-at price (optional, for sale)</label><input type="number" id="np-compare" placeholder="e.g. 5000 to show as a sale"/></div>
+      </div>
+      <div class="field-row">
+        <div><label>Badge (optional)</label><input type="text" id="np-badge" placeholder="New / Bestseller"/></div>
+        <div><label>Product photo (optional)</label><input type="file" id="np-image" accept="image/png,image/jpeg,image/webp"/></div>
+      </div>
+      <p class="error-msg" id="np-error" style="display:none;"></p>
+      <div class="slot-actions">
+        <button class="btn-sm btn-save" id="np-submit">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+          Create product
+        </button>
+        <button class="btn-sm" id="np-cancel" style="background:transparent; border:1px solid var(--edge); color:var(--dim);">Cancel</button>
+      </div>
+    </div>
+
+    <div class="slots-row" id="slotsRow"></div>
+
+    <h2 class="section">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14"/></svg>
+      Revenue, last 14 days
+    </h2>
+    <div class="chart-panel" id="chartPanel"></div>
+
+    <div class="section-row">
+      <h2 class="section" style="margin-bottom:0;">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-2.8-2.8L7 14"/></svg>
+        Recent orders
+      </h2>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-sm btn-delete-bulk" id="bulkDeleteBtn" style="display:none;">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>
+          Delete selected (<span id="bulkDeleteCount">0</span>)
+        </button>
+        <button class="btn-sm btn-export" id="exportCsvBtn">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36px;"><input type="checkbox" id="selectAllOrders"/></th>
+          <th>Order</th><th>Slot</th><th>Product</th><th>Price</th><th>Status</th><th>Time</th><th style="width:44px;"></th>
+        </tr>
+      </thead>
+      <tbody id="ordersBody"></tbody>
+    </table>
+    <div style="text-align:center; margin-top:24px; opacity:.4; font-size:11px;">build v2026-07-31-addproduct</div>
+  </div>
+</div>
+
+<script>
+const loginScreen = document.getElementById('loginScreen');
+const dashboard = document.getElementById('dashboard');
+
+const saveIcon = `<svg class="icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>`;
+const testIcon = `<svg class="icon" viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>`;
+
+// server stores timestamps in UTC with no timezone marker; mark as UTC explicitly,
+// then always render in Pakistan Standard Time so the admin sees consistent local times regardless of their device.
+function formatPKT(raw){
+  if(!raw) return '';
+  const iso = raw.includes('T') ? raw : raw.replace(' ', 'T') + 'Z';
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return raw;
+  return d.toLocaleString('en-US', { timeZone: 'Asia/Karachi', dateStyle: 'medium', timeStyle: 'short' }) + ' PKT';
+}
+
+async function checkSession(){
+  const r = await fetch('/api/admin/me');
+  if(r.ok){ showDashboard(); } else { showLogin(); }
+}
+
+function showLogin(){ loginScreen.style.display='flex'; dashboard.style.display='none'; }
+function showDashboard(){
+  loginScreen.style.display='none'; dashboard.style.display='block';
+  loadSlots(); loadOrders(); loadMachine(); loadAnalytics();
+  setInterval(loadOrders, 4000);
+  setInterval(loadMachine, 5000);
+  setInterval(loadAnalytics, 15000);
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+  try{
+    const r = await fetch('/api/admin/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password })
+    });
+    if(r.ok){ showDashboard(); }
+    else { errEl.style.display = 'flex'; }
+  }catch(e){ errEl.style.display = 'flex'; }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await fetch('/api/admin/logout', { method:'POST' });
+  showLogin();
+});
+
+async function loadMachine(){
+  const r = await fetch('/api/admin/machine');
+  if(!r.ok) return;
+  const m = await r.json();
+  const dot = document.getElementById('machineDot');
+  const text = document.getElementById('machineText');
+  if(m.online){ dot.classList.add('on'); text.textContent = 'MACHINE ONLINE'; }
+  else { dot.classList.remove('on'); text.textContent = 'MACHINE OFFLINE'; }
+}
+
+async function loadSlots(){
+  const r = await fetch('/api/admin/slots');
+  const slots = await r.json();
+  const row = document.getElementById('slotsRow');
+  row.innerHTML = slots.map(s => `
+    <div class="slot-panel" data-id="${s.id}">
+      <div class="top">
+        <div>
+          <div class="code">SLOT ${s.slot_code}</div>
+          <h3>${s.name}</h3>
+        </div>
+      </div>
+      <div class="field-row">
+        <div><label>Product name</label><input type="text" class="f-name" value="${s.name}"/></div>
+      </div>
+      <div class="field-row">
+        <div><label>Subtitle</label><input type="text" class="f-sub" value="${s.subtitle || ''}"/></div>
+      </div>
+      <div class="field-row">
+        <div><label>Price (PKR)</label><input type="number" class="f-price" value="${s.price}"/></div>
+        <div><label>Stock</label><input type="number" class="f-stock" value="${s.stock}" min="0"/></div>
+      </div>
+      <div class="field-row">
+        <div><label>Compare-at price (optional, for sale)</label><input type="number" class="f-compare" placeholder="e.g. 5000" value="${s.compare_at_price || ''}"/></div>
+      </div>
+      <div class="field-row">
+        <div><label>Category</label>
+          <select class="f-category">
+            <option value="flavour" ${s.category === 'flavour' ? 'selected' : ''}>Flavour (e-liquid)</option>
+            <option value="pod" ${s.category === 'pod' ? 'selected' : ''}>Pod Kit (device)</option>
+          </select>
+        </div>
+        <div><label>Badge (optional)</label><input type="text" class="f-badge" placeholder="New / Bestseller" value="${s.badge || ''}"/></div>
+      </div>
+      <div class="slot-actions">
+        <button class="btn-sm btn-save">${saveIcon} Save changes</button>
+        <button class="btn-sm btn-test">${testIcon} Test dispense</button>
+        <button class="btn-sm btn-delete" title="Delete this product">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  row.querySelectorAll('.slot-panel').forEach(panel => {
+    const id = panel.dataset.id;
+    panel.querySelector('.btn-save').addEventListener('click', async () => {
+      const compareVal = panel.querySelector('.f-compare').value.trim();
+      const body = {
+        name: panel.querySelector('.f-name').value,
+        subtitle: panel.querySelector('.f-sub').value,
+        price: parseInt(panel.querySelector('.f-price').value, 10),
+        compareAtPrice: compareVal ? parseInt(compareVal, 10) : null,
+        stock: parseInt(panel.querySelector('.f-stock').value, 10),
+        badge: panel.querySelector('.f-badge').value.trim(),
+        category: panel.querySelector('.f-category').value,
+        active: true
+      };
+      await fetch('/api/admin/slots/' + id, {
+        method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      loadSlots();
+    });
+    panel.querySelector('.btn-test').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const slotCode = panel.querySelector('.code').textContent.replace('SLOT ','').trim();
+      btn.disabled = true; btn.innerHTML = 'Dispensing…';
+      const r = await fetch('/api/admin/dispense/' + slotCode, { method:'POST' });
+      if(!r.ok){ const d = await r.json(); alert(d.error || 'Failed to dispense'); }
+      setTimeout(()=>{ btn.disabled = false; btn.innerHTML = testIcon + ' Test dispense'; loadSlots(); loadOrders(); }, 3200);
+    });
+    panel.querySelector('.btn-delete').addEventListener('click', async () => {
+      const name = panel.querySelector('.f-name').value;
+      if(!confirm(`Delete "${name}"? This can't be undone.`)) return;
+      await fetch('/api/admin/slots/' + id, { method:'DELETE' });
+      loadSlots();
+    });
+  });
+
+  renderLowStockBanner(slots);
+}
+
+function renderLowStockBanner(slots){
+  const banner = document.getElementById('lowStockBanner');
+  const low = slots.filter(s => s.active && s.stock <= 2);
+  if(low.length === 0){ banner.style.display = 'none'; return; }
+  const names = low.map(s => `${s.name} (${s.stock <= 0 ? 'out' : s.stock + ' left'})`).join(', ');
+  banner.innerHTML = `
+    <svg class="icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+    <span>Low stock: ${names}. Restock soon to avoid downtime.</span>
+  `;
+  banner.style.display = 'flex';
+}
+
+// ---------- add new product form ----------
+const addProductPanel = document.getElementById('addProductPanel');
+document.getElementById('addProductBtn').addEventListener('click', () => {
+  const showing = addProductPanel.style.display !== 'none';
+  addProductPanel.style.display = showing ? 'none' : 'block';
+  document.getElementById('np-error').style.display = 'none';
+});
+document.getElementById('np-cancel').addEventListener('click', () => {
+  addProductPanel.style.display = 'none';
+});
+
+document.getElementById('np-submit').addEventListener('click', async () => {
+  const errEl = document.getElementById('np-error');
+  errEl.style.display = 'none';
+
+  const slotCode = document.getElementById('np-slot').value.trim();
+  const name = document.getElementById('np-name').value.trim();
+  const subtitle = document.getElementById('np-sub').value.trim();
+  const price = parseInt(document.getElementById('np-price').value, 10);
+  const compareVal = document.getElementById('np-compare').value.trim();
+  const compareAtPrice = compareVal ? parseInt(compareVal, 10) : null;
+  const stock = parseInt(document.getElementById('np-stock').value, 10) || 0;
+  const badge = document.getElementById('np-badge').value.trim();
+  const category = document.getElementById('np-category').value;
+  const imageFile = document.getElementById('np-image').files[0];
+
+  if(!slotCode || !name || !price){
+    errEl.textContent = 'Slot code, product name, and price are required.';
+    errEl.style.display = 'flex';
+    return;
+  }
+
+  const submitBtn = document.getElementById('np-submit');
+  submitBtn.disabled = true;
+  const originalHtml = submitBtn.innerHTML;
+  submitBtn.textContent = 'Creating…';
+
+  try{
+    let imagePath = null;
+    if(imageFile){
+      const fd = new FormData();
+      fd.append('image', imageFile);
+      const upRes = await fetch('/api/admin/upload', { method:'POST', body: fd });
+      const upData = await upRes.json();
+      if(!upRes.ok){ throw new Error(upData.error || 'Image upload failed'); }
+      imagePath = upData.path;
+    }
+
+    const r = await fetch('/api/admin/slots', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ slotCode, name, subtitle, price, compareAtPrice, stock, badge, category, image: imagePath })
+    });
+    const data = await r.json();
+    if(!r.ok){ throw new Error(data.error || 'Could not create product'); }
+
+    addProductPanel.style.display = 'none';
+    ['np-slot','np-name','np-sub','np-price','np-compare','np-stock','np-badge'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('np-image').value = '';
+    loadSlots();
+  }catch(e){
+    errEl.textContent = e.message;
+    errEl.style.display = 'flex';
+  }finally{
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalHtml;
+  }
+});
+
+const selectedOrderIds = new Set();
+
+function updateBulkDeleteBar(){
+  const btn = document.getElementById('bulkDeleteBtn');
+  const countEl = document.getElementById('bulkDeleteCount');
+  countEl.textContent = selectedOrderIds.size;
+  btn.style.display = selectedOrderIds.size > 0 ? 'inline-flex' : 'none';
+}
+
+async function loadOrders(){
+  const r = await fetch('/api/admin/orders');
+  if(!r.ok) return;
+  const orders = await r.json();
+  const body = document.getElementById('ordersBody');
+
+  // drop selections for orders that no longer exist (e.g. deleted elsewhere)
+  const currentIds = new Set(orders.map(o => o.id));
+  Array.from(selectedOrderIds).forEach(id => { if(!currentIds.has(id)) selectedOrderIds.delete(id); });
+
+  if(orders.length === 0){
+    body.innerHTML = `<tr><td colspan="8" class="empty-note">No orders yet — test the machine from the storefront.</td></tr>`;
+    updateBulkDeleteBar();
+    document.getElementById('selectAllOrders').checked = false;
+    return;
+  }
+
+  body.innerHTML = orders.map(o => `
+    <tr class="${selectedOrderIds.has(o.id) ? 'row-selected' : ''}" data-order-id="${o.id}">
+      <td><input type="checkbox" class="order-checkbox" data-id="${o.id}" ${selectedOrderIds.has(o.id) ? 'checked' : ''}/></td>
+      <td class="mono">#${o.id}</td>
+      <td>${o.slot_code}</td>
+      <td>${o.product_name}</td>
+      <td>Rs ${o.price.toLocaleString()}</td>
+      <td><span class="status-chip status-${o.status}">${o.status}</span></td>
+      <td class="mono" style="color:var(--dim)">${formatPKT(o.created_at)}</td>
+      <td>
+        <button class="order-delete-btn" data-id="${o.id}" title="Delete this order">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+
+  body.querySelectorAll('.order-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const id = parseInt(cb.dataset.id, 10);
+      if(cb.checked) selectedOrderIds.add(id); else selectedOrderIds.delete(id);
+      cb.closest('tr').classList.toggle('row-selected', cb.checked);
+      document.getElementById('selectAllOrders').checked = selectedOrderIds.size === orders.length;
+      updateBulkDeleteBar();
+    });
+  });
+
+  body.querySelectorAll('.order-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      if(!confirm(`Delete order #${id}? This can't be undone.`)) return;
+      await fetch('/api/admin/orders/' + id, { method:'DELETE' });
+      selectedOrderIds.delete(parseInt(id, 10));
+      loadOrders();
+    });
+  });
+
+  document.getElementById('selectAllOrders').checked = orders.length > 0 && orders.every(o => selectedOrderIds.has(o.id));
+  updateBulkDeleteBar();
+}
+
+document.getElementById('selectAllOrders').addEventListener('change', (e) => {
+  document.querySelectorAll('.order-checkbox').forEach(cb => {
+    cb.checked = e.target.checked;
+    const id = parseInt(cb.dataset.id, 10);
+    if(e.target.checked) selectedOrderIds.add(id); else selectedOrderIds.delete(id);
+    cb.closest('tr').classList.toggle('row-selected', e.target.checked);
+  });
+  updateBulkDeleteBar();
+});
+
+document.getElementById('bulkDeleteBtn').addEventListener('click', async () => {
+  const ids = Array.from(selectedOrderIds);
+  if(ids.length === 0) return;
+  if(!confirm(`Delete ${ids.length} selected order(s)? This can't be undone.`)) return;
+  await fetch('/api/admin/orders/bulk-delete', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ids })
+  });
+  selectedOrderIds.clear();
+  loadOrders();
+});
+
+async function loadAnalytics(){
+  const r = await fetch('/api/admin/analytics');
+  if(!r.ok) return;
+  const data = await r.json();
+
+  const statHost = document.getElementById('statCards');
+  statHost.innerHTML = `
+    <div class="stat-card">
+      <div class="label">Total revenue</div>
+      <div class="value">Rs ${data.totals.totalRevenue.toLocaleString()}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Dispensed orders</div>
+      <div class="value">${data.totals.totalOrders}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Failed orders</div>
+      <div class="value ${data.failedCount > 0 ? 'danger' : ''}">${data.failedCount}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Top flavor</div>
+      <div class="value" style="font-size:15px;">${data.topProducts[0] ? data.topProducts[0].product_name : '—'}</div>
+    </div>
+  `;
+
+  const chartHost = document.getElementById('chartPanel');
+  if(data.dailyRevenue.length === 0){
+    chartHost.innerHTML = `<div class="chart-empty">No dispensed orders yet — sales will chart here once the machine starts selling.</div>`;
+    return;
+  }
+  const max = Math.max(...data.dailyRevenue.map(d => d.revenue), 1);
+  chartHost.innerHTML = `<div class="chart-bars">${data.dailyRevenue.map(d => {
+    const heightPct = Math.max(4, Math.round((d.revenue / max) * 100));
+    const [y, m, d2] = d.day.split('-');
+    const label = new Date(Number(y), Number(m)-1, Number(d2)).toLocaleDateString(undefined, { month:'short', day:'numeric' });
+    return `<div class="chart-bar-col">
+      <div class="chart-bar" style="height:${heightPct}%" title="Rs ${d.revenue.toLocaleString()} · ${d.orders} orders"></div>
+      <div class="chart-bar-label">${label}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+document.getElementById('exportCsvBtn').addEventListener('click', () => {
+  window.location.href = '/api/admin/orders/export.csv';
+});
+
+checkSession();
+</script>
+</body>
+</html>
